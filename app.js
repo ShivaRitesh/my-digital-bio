@@ -1,8 +1,39 @@
+// Register Chroma Key (Green Screen) Shader Component in A-Frame
+if (typeof AFRAME !== 'undefined') {
+  AFRAME.registerShader('chromakey', {
+    schema: {
+      src: {type: 'map'},
+      color: {type: 'color', default: '0.1 0.7 0.15'}, // Target green key color
+      similarity: {type: 'number', default: 0.38},    // Tolerance thresh
+      smoothness: {type: 'number', default: 0.08}     // Feathering boundary
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform sampler2D src;
+      uniform vec3 color;
+      uniform float similarity;
+      uniform float smoothness;
+      void main() {
+        vec4 textureColor = texture2D(src, vUv);
+        float distance = distance(textureColor.rgb, color);
+        float alpha = smoothstep(similarity, similarity + smoothness, distance);
+        gl_FragColor = vec4(textureColor.rgb, textureColor.a * alpha);
+      }
+    `
+  });
+}
+
 // Select DOM Elements
 const bootScreen = document.getElementById('bootScreen');
 const bootBtn = document.getElementById('bootBtn');
 const bootTerminal = document.getElementById('bootTerminal');
-const webcamVideo = document.getElementById('webcam');
 const camStatus = document.getElementById('camStatus');
 const qrInput = document.getElementById('qrInput');
 const qrcodeContainer = document.getElementById('qrcode');
@@ -11,21 +42,26 @@ const waMsg = document.getElementById('waMsg');
 const vcardBtn = document.getElementById('vcardBtn');
 const shareBtn = document.getElementById('shareBtn');
 const voiceSyncBtn = document.getElementById('voiceSyncBtn');
-const assistantImg = document.getElementById('assistantImg');
-const mouthWave = document.getElementById('mouthWave');
 const subtitlesBox = document.getElementById('subtitlesBox');
 const avatarWrapper = document.getElementById('avatarWrapper');
 const hologramStage = document.getElementById('hologramStage');
-const particlesCanvas = document.getElementById('particlesCanvas');
 const visualizerCanvas = document.getElementById('visualizerCanvas');
 
-// New interactive elements: Flipping card and Depth Slider
+// Video Presenter element
+const presenterVideo = document.getElementById('presenterVideo');
+const arPresenter = document.getElementById('arPresenter');
+
+// Card Flipping & Depth Slider
 const cardInner = document.getElementById('cardInner');
 const flipCardBtn = document.getElementById('flipCardBtn');
 const depthSlider = document.getElementById('depthSlider');
 
-// Canvas context setups
-const pCtx = particlesCanvas.getContext('2d');
+// Test Target Modal Elements
+const showMarkerBtn = document.getElementById('showMarkerBtn');
+const markerPanel = document.getElementById('markerPanel');
+const closeMarkerBtn = document.getElementById('closeMarkerBtn');
+
+// Visualizer context
 const vCtx = visualizerCanvas.getContext('2d');
 
 // Q&A Answers Data Map (Briefing about Ritesh)
@@ -54,33 +90,31 @@ const logBoot = (text, delay) => {
   });
 };
 
-// --- 1. WebAR Camera Initialization ---
-const startARCamera = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment" } // Try back camera
-    });
-    webcamVideo.srcObject = stream;
-    camStatus.innerHTML = "CAMERA: <span>ONLINE</span>";
-    camStatus.style.color = "var(--neon-green)";
-  } catch (err) {
-    console.warn("Camera failed to stream. Using fallback grid background.", err);
-    camStatus.innerHTML = "CAMERA: <span>DIGITAL_ENV</span>";
-    camStatus.style.color = "var(--neon-red)";
-  }
-};
-
-// Hook Boot Button
+// Hook Boot Button (User interaction unlocks speech and video playback)
 bootBtn.addEventListener('click', async () => {
   if (isSystemBooted) return;
   bootBtn.disabled = true;
   bootBtn.textContent = "ESTABLISHING LINK...";
 
-  await logBoot("Acquiring hardware camera stream...", 200);
-  await startARCamera();
+  await logBoot("Initializing WebAR camera capture interface...", 200);
+  
+  // AR.js captures camera automatically. We set HUD online status.
+  camStatus.innerHTML = "CAMERA: <span>ONLINE</span>";
+  camStatus.style.color = "var(--neon-green)";
+
+  await logBoot("Loading green-screen video rendering matrix...", 200);
+  
+  // Warm up and play/pause video to bypass browser autoplay blocks
+  try {
+    presenterVideo.play().then(() => {
+      presenterVideo.pause();
+    });
+  } catch (err) {
+    console.warn("Video warmup blocked or failed:", err);
+  }
+
   await logBoot("Initializing voice synthesis module...", 200);
   loadVoices();
-  await logBoot("Synthesizing projection matrix...", 200);
   await logBoot("Hologram synchronized. Access Granted.", 100);
 
   // Fade out boot screen
@@ -88,12 +122,12 @@ bootBtn.addEventListener('click', async () => {
     bootScreen.classList.add('fade-out');
     isSystemBooted = true;
     
-    // Play welcoming greeting
+    // Play welcome greeting
     speakText(answers.welcome);
   }, 400);
 });
 
-// --- 2. Web Speech Synthesis Voice Selector ---
+// --- 1. Web Speech Synthesis Voice Selector ---
 const loadVoices = () => {
   if (!speechSynth) return;
   const voices = speechSynth.getVoices();
@@ -115,7 +149,7 @@ if (speechSynth && speechSynth.onvoiceschanged !== undefined) {
   speechSynth.onvoiceschanged = loadVoices;
 }
 
-// --- 3. Speech Playback & Lip-Sync Animation ---
+// --- 2. Speech Playback & Video Sync ---
 const speakText = (text) => {
   if (!speechSynth) {
     subtitlesBox.textContent = "Voice synthesis not supported on this browser.";
@@ -136,7 +170,7 @@ const speakText = (text) => {
     currentUtterance.voice = selectedVoice;
   }
   
-  // Cute, high-pitched virtual assistant voice parameters
+  // Cute, high-pitched voice presets
   currentUtterance.pitch = 1.25; 
   currentUtterance.rate = 0.95;  
   
@@ -152,19 +186,23 @@ const speakText = (text) => {
     stopVisualTalking();
   };
   
-  // Sync boundary triggers to shake image and expand mouth waves in sync with syllables
+  // Sync word boundaries to trigger micro jitter shakes on A-Frame video entity
   currentUtterance.onboundary = (e) => {
     if (e.name === 'word') {
       const depthScale = parseFloat(depthSlider.value);
-      // Dynamic talking ripple expansions
-      mouthWave.style.transform = `translate(-50%, -50%) scale(${Math.random() * 0.8 + 1.2}) scaleY(${Math.random() * 0.6 + 1.1})`;
+      const widthFactor = 1.2 * depthScale;
+      const heightFactor = 1.6 * depthScale;
       
-      // Animate rotation while maintaining the slider depth scale factor!
-      assistantImg.style.transform = `scale(${depthScale}) translateY(-4px) rotate(${Math.random() * 4 - 2}deg)`;
-      setTimeout(() => {
-        mouthWave.style.transform = '';
-        assistantImg.style.transform = `scale(${depthScale})`;
-      }, 70);
+      // Jitter rotation and scale during words
+      if (arPresenter) {
+        arPresenter.setAttribute('width', widthFactor * (Math.random() * 0.05 + 0.98));
+        arPresenter.setAttribute('height', heightFactor * (Math.random() * 0.05 + 0.98));
+        
+        setTimeout(() => {
+          arPresenter.setAttribute('width', widthFactor);
+          arPresenter.setAttribute('height', heightFactor);
+        }, 80);
+      }
     }
   };
 
@@ -176,11 +214,22 @@ const startVisualTalking = (text) => {
   avatarWrapper.classList.add('is-talking-avatar');
   subtitlesBox.textContent = text;
   subtitlesBox.classList.add('visible');
+  
+  // Play the green-screen presenter video when speaking
+  if (presenterVideo) {
+    presenterVideo.play().catch(e => console.warn("Video playback blocked:", e));
+  }
 };
 
 const stopVisualTalking = () => {
   hologramStage.classList.remove('is-talking');
   avatarWrapper.classList.remove('is-talking-avatar');
+  
+  // Pause the green-screen presenter video when silent
+  if (presenterVideo) {
+    presenterVideo.pause();
+  }
+  
   setTimeout(() => {
     if (!speechSynth.speaking) {
       subtitlesBox.classList.remove('visible');
@@ -188,29 +237,30 @@ const stopVisualTalking = () => {
   }, 3000);
 };
 
-// --- 4. 3D Card Flip Mechanism ---
+// --- 3. 3D Card Flip Mechanism ---
 const toggleCardFlip = (e) => {
   if (e) e.stopPropagation();
   cardInner.classList.toggle('flipped');
 };
 
-// Flip card on direct card click or flip button tap
 cardInner.addEventListener('click', toggleCardFlip);
 flipCardBtn.addEventListener('click', toggleCardFlip);
 
 
-// --- 5. Hologram Depth Control (Move Back & Forth) ---
+// --- 4. WebAR Hologram Depth Control (Scale Video Plane) ---
 depthSlider.addEventListener('input', (e) => {
-  const depth = e.target.value;
-  // Apply scale to the assistant image directly
-  assistantImg.style.transform = `scale(${depth})`;
-  
-  // Also adjust particles canvas float speed slightly based on depth perspective
-  particleSpeedModifier = depth;
+  const depth = parseFloat(e.target.value);
+  if (arPresenter) {
+    // Modify width and height of <a-video> plane in A-Frame in real time
+    arPresenter.setAttribute('width', 1.2 * depth);
+    arPresenter.setAttribute('height', 1.6 * depth);
+    // Push/pull Y coordinate height offset based on depth scale
+    arPresenter.setAttribute('position', `0 ${0.8 * depth} 0`);
+  }
 });
 
 
-// --- 6. Interactive Q&A HUD Commands ---
+// --- 5. Interactive Q&A HUD Commands ---
 const qaGrid = document.getElementById('qaGrid');
 const qaButtons = qaGrid.querySelectorAll('.qa-hud-btn');
 
@@ -222,11 +272,6 @@ qaButtons.forEach(btn => {
     const targetBtn = e.currentTarget;
     targetBtn.classList.add('active');
     
-    // Auto flip card back to front if flipped, so we can see the assistant project
-    if (cardInner.classList.contains('flipped')) {
-      cardInner.classList.remove('flipped');
-    }
-    
     const key = targetBtn.getAttribute('data-question');
     if (answers[key]) {
       speakText(answers[key]);
@@ -235,7 +280,7 @@ qaButtons.forEach(btn => {
 });
 
 
-// --- 7. Speech Audio Visualizer Canvas Renderer ---
+// --- 6. Speech Audio Visualizer Canvas Renderer ---
 const resizeVisualizer = () => {
   const rect = visualizerCanvas.getBoundingClientRect();
   visualizerCanvas.width = rect.width;
@@ -260,7 +305,6 @@ const drawVisualizer = () => {
     const x = i * barWidth;
     const y = (visualizerCanvas.height - height) / 2;
     
-    // Red glowing equalizer bars
     vCtx.fillStyle = 'var(--neon-red)';
     vCtx.shadowBlur = 4;
     vCtx.shadowColor = 'var(--neon-red)';
@@ -273,11 +317,23 @@ const drawVisualizer = () => {
 drawVisualizer();
 
 
+// --- 7. Printable Test Target Modal Controls ---
+showMarkerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  markerPanel.classList.add('visible');
+});
+
+closeMarkerBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  markerPanel.classList.remove('visible');
+});
+
+
 // --- 8. Dynamic QR Code HUD Widget ---
 let currentQR = new QRCode(qrcodeContainer, {
   text: qrInput.value,
-  width: 90,
-  height: 90,
+  width: 70,
+  height: 70,
   colorDark: "#030205",
   colorLight: "#ffffff",
   correctLevel: QRCode.CorrectLevel.H
@@ -364,69 +420,7 @@ shareBtn.addEventListener('click', async (e) => {
 });
 
 
-// --- 12. Floating Canvas Particles stage ---
-let particles = [];
-let particleSpeedModifier = 1.0;
-
-const resizeParticles = () => {
-  const rect = particlesCanvas.getBoundingClientRect();
-  particlesCanvas.width = rect.width;
-  particlesCanvas.height = rect.height;
-};
-resizeParticles();
-window.addEventListener('resize', resizeParticles);
-
-class Particle {
-  constructor() {
-    this.reset();
-  }
-  reset() {
-    this.x = Math.random() * particlesCanvas.width;
-    this.y = particlesCanvas.height + Math.random() * 20;
-    this.size = Math.random() * 1.8 + 0.5;
-    this.speedY = -(Math.random() * 0.7 + 0.2);
-    this.speedX = (Math.random() - 0.5) * 0.3;
-    this.alpha = Math.random() * 0.5 + 0.2;
-    const colors = ['#ff0033', '#ffaa00', '#ffffff']; // Red & Gold & White particles
-    this.color = colors[Math.floor(Math.random() * colors.length)];
-  }
-  update() {
-    const talkScale = hologramStage.classList.contains('is-talking') ? 2.5 : 1.0;
-    this.y += this.speedY * talkScale * particleSpeedModifier;
-    this.x += this.speedX * talkScale * particleSpeedModifier;
-    if (this.y < 0 || this.x < 0 || this.x > particlesCanvas.width) {
-      this.reset();
-    }
-  }
-  draw() {
-    pCtx.save();
-    pCtx.globalAlpha = this.alpha;
-    pCtx.shadowBlur = 4;
-    pCtx.shadowColor = this.color;
-    pCtx.fillStyle = this.color;
-    pCtx.beginPath();
-    pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    pCtx.fill();
-    pCtx.restore();
-  }
-}
-
-for (let i = 0; i < 20; i++) {
-  particles.push(new Particle());
-}
-
-const drawParticles = () => {
-  pCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
-  particles.forEach(p => {
-    p.update();
-    p.draw();
-  });
-  requestAnimationFrame(drawParticles);
-};
-drawParticles();
-
-
-// --- 13. Voice Synced Mute / Unmute Button ---
+// --- 12. Voice Synced Mute / Unmute Button ---
 voiceSyncBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   isAudioEnabled = !isAudioEnabled;
