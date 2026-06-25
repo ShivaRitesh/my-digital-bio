@@ -218,6 +218,11 @@ cardPortal.addEventListener('touchend', (e) => {
 launchArBtn.addEventListener('click', (e) => {
   e.stopPropagation(); // Avoid flipping the card
   
+  // Hide main card portal and background to reveal camera feed
+  cardPortal.style.display = 'none';
+  const cyberBg = document.querySelector('.cyber-background');
+  if (cyberBg) cyberBg.style.display = 'none';
+  
   // Show full overlay
   arOverlay.style.display = 'block';
   
@@ -285,6 +290,11 @@ exitArBtn.addEventListener('click', (e) => {
   if (dynamicArScene) {
     dynamicArScene.remove();
   }
+  
+  // Restore main card portal and background
+  cardPortal.style.display = 'flex';
+  const cyberBg = document.querySelector('.cyber-background');
+  if (cyberBg) cyberBg.style.display = 'block';
   
   // Hide overlay container
   arOverlay.style.display = 'none';
