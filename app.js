@@ -34,20 +34,47 @@ if (typeof AFRAME !== 'undefined') {
 const bootScreen = document.getElementById('bootScreen');
 const bootBtn = document.getElementById('bootBtn');
 const bootTerminal = document.getElementById('bootTerminal');
+const camStatus = document.getElementById('camStatus');
+const qrInput = document.getElementById('qrInput');
+const waForm = document.getElementById('waForm');
+const waMsg = document.getElementById('waMsg');
+const vcardBtn = document.getElementById('vcardBtn');
+const shareBtn = document.getElementById('shareBtn');
+const voiceSyncBtn = document.getElementById('voiceSyncBtn');
+const assistantImg = document.getElementById('assistantImg');
+const mouthWave = document.getElementById('mouthWave');
 const subtitlesBox = document.getElementById('subtitlesBox');
+const avatarWrapper = document.getElementById('avatarWrapper');
+const hologramStage = document.getElementById('hologramStage');
+const visualizerCanvas = document.getElementById('visualizerCanvas');
 
 // WebAR A-Frame elements
 const presenterVideo = document.getElementById('presenterVideo');
 const arPresenter = document.getElementById('arPresenter');
 
-// Ritesh's Full Biography Speech Text
-const bioSpeechText = "Hello! Welcome to Ritesh's WebAR experience. Ritesh is a Master of AI who specializes in bringing complex code, intelligent agentic workflows, and immersive augmented reality projects into reality. He possesses advanced capabilities in building custom LLM agents, training computer vision systems, and architecting full-stack software. If you can imagine it, he can bring it to life!";
+// Card Flipping & Depth Slider
+const cardInner = document.getElementById('cardInner');
+const flipCardBtn = document.getElementById('flipCardBtn');
+const depthSlider = document.getElementById('depthSlider');
+
+// Canvas context setups
+const vCtx = visualizerCanvas.getContext('2d');
+
+// Q&A Answers Data Map (Briefing about Ritesh)
+const answers = {
+  welcome: "Holographic link initialized. System online. Hello! I am Ritesh's virtual AI assistant. Tap any briefing module to command projection.",
+  intro: "Ritesh is a Master of AI who specializes in bringing complex code, intelligent agentic workflows, and immersive AR projects into reality. He bridges physical and digital spaces to build next-generation applications.",
+  capabilities: "As a Master of AI, Ritesh excels at designing autonomous LLM agents, training computer vision systems, building augmented reality viewports, and architecting full-stack web software. There is practically nothing he cannot bring to life!",
+  contact: "Connecting with Ritesh is simple. Click the WhatsApp or Instagram buttons at the bottom of the HUD to talk to him directly, or scan the QR code to save his contact card. Let's build something extraordinary together!"
+};
 
 // State Variables
 let speechSynth = window.speechSynthesis;
 let currentUtterance = null;
 let selectedVoice = null;
+let isAudioEnabled = true;
 let isSystemBooted = false;
+let isTalking = false;
 
 // Terminal simulation logger
 const logBoot = (text, delay) => {
@@ -66,10 +93,15 @@ bootBtn.addEventListener('click', async () => {
   bootBtn.disabled = true;
   bootBtn.textContent = "ESTABLISHING LINK...";
 
-  await logBoot("Acquiring device camera feed...", 200);
-  await logBoot("Compiling green-screen chroma key WebGL shaders...", 200);
+  await logBoot("Acquiring hardware camera stream...", 200);
   
-  // Warm up video to bypass browser autoplay blocks
+  // AR.js captures camera automatically. We set HUD online status.
+  camStatus.innerHTML = "CAMERA: <span>ONLINE</span>";
+  camStatus.style.color = "var(--neon-green)";
+
+  await logBoot("Loading green-screen video rendering matrix...", 200);
+  
+  // Warm up and play/pause video to bypass browser autoplay blocks
   try {
     presenterVideo.play().then(() => {
       presenterVideo.pause();
@@ -87,8 +119,8 @@ bootBtn.addEventListener('click', async () => {
     bootScreen.classList.add('fade-out');
     isSystemBooted = true;
     
-    // Automatically start biography briefing
-    speakText(bioSpeechText);
+    // Play welcome greeting
+    speakText(answers.welcome);
   }, 400);
 });
 
@@ -97,7 +129,7 @@ const loadVoices = () => {
   if (!speechSynth) return;
   const voices = speechSynth.getVoices();
   
-  // Prioritize high-quality female voices
+  // Prioritize cute female assistant voices
   const femaleKeywords = ['female', 'google uk english female', 'zira', 'samantha', 'hazel', 'victoria', 'premium', 'en-'];
   let bestVoice = null;
   
@@ -117,19 +149,27 @@ if (speechSynth && speechSynth.onvoiceschanged !== undefined) {
 // --- 2. Speech Playback & Video Sync ---
 const speakText = (text) => {
   if (!speechSynth) {
-    subtitlesBox.textContent = "Voice synthesis not supported on this browser.";
+    if (subtitlesBox) subtitlesBox.textContent = "Voice synthesis not supported on this browser.";
     return;
   }
   
   speechSynth.cancel();
   stopVisualTalking();
+  
+  if (!isAudioEnabled) {
+    if (subtitlesBox) {
+      subtitlesBox.textContent = text;
+      subtitlesBox.classList.add('visible');
+    }
+    return;
+  }
 
   currentUtterance = new SpeechSynthesisUtterance(text);
   if (selectedVoice) {
     currentUtterance.voice = selectedVoice;
   }
   
-  // Configure cute virtual assistant tone
+  // Cute, high-pitched voice presets
   currentUtterance.pitch = 1.25; 
   currentUtterance.rate = 0.95;  
   
@@ -148,10 +188,11 @@ const speakText = (text) => {
   // Sync word boundaries to trigger micro jitter shakes on A-Frame video entity
   currentUtterance.onboundary = (e) => {
     if (e.name === 'word') {
-      const widthFactor = 1.25;
-      const heightFactor = 1.65;
+      const depthScale = parseFloat(depthSlider.value);
+      const widthFactor = 1.25 * depthScale;
+      const heightFactor = 1.65 * depthScale;
       
-      // Jitter rotation and scale during words to simulate lip sync / active talking
+      // Jitter rotation and scale during words
       if (arPresenter) {
         arPresenter.setAttribute('width', widthFactor * (Math.random() * 0.05 + 0.98));
         arPresenter.setAttribute('height', heightFactor * (Math.random() * 0.05 + 0.98));
@@ -168,8 +209,13 @@ const speakText = (text) => {
 };
 
 const startVisualTalking = (text) => {
-  subtitlesBox.textContent = text;
-  subtitlesBox.classList.add('visible');
+  isTalking = true;
+  if (hologramStage) hologramStage.classList.add('is-talking');
+  if (avatarWrapper) avatarWrapper.classList.add('is-talking-avatar');
+  if (subtitlesBox) {
+    subtitlesBox.textContent = text;
+    subtitlesBox.classList.add('visible');
+  }
   
   // Play the green-screen presenter video when speaking
   if (presenterVideo) {
@@ -178,16 +224,209 @@ const startVisualTalking = (text) => {
 };
 
 const stopVisualTalking = () => {
+  isTalking = false;
+  if (hologramStage) hologramStage.classList.remove('is-talking');
+  if (avatarWrapper) avatarWrapper.classList.remove('is-talking-avatar');
+  
   // Pause the green-screen presenter video when silent
   if (presenterVideo) {
     presenterVideo.pause();
   }
   
   setTimeout(() => {
-    if (!speechSynth.speaking) {
-      subtitlesBox.classList.remove('visible');
-      subtitlesBox.textContent = "Point camera at AR Target (Hiro pattern) to project briefing.";
-      subtitlesBox.classList.add('visible');
+    if (speechSynth && !speechSynth.speaking) {
+      if (subtitlesBox) subtitlesBox.classList.remove('visible');
     }
-  }, 4000);
+  }, 3000);
 };
+
+// --- 3. 3D Card Flip Mechanism ---
+const toggleCardFlip = (e) => {
+  if (e) e.stopPropagation();
+  cardInner.classList.toggle('flipped');
+};
+
+cardInner.addEventListener('click', toggleCardFlip);
+flipCardBtn.addEventListener('click', toggleCardFlip);
+
+
+// --- 4. WebAR Hologram Depth Control (Scale Video Plane) ---
+depthSlider.addEventListener('input', (e) => {
+  const depth = parseFloat(e.target.value);
+  if (arPresenter) {
+    // Modify width and height of <a-video> plane in A-Frame in real time
+    arPresenter.setAttribute('width', 1.25 * depth);
+    arPresenter.setAttribute('height', 1.65 * depth);
+    // Push/pull Y coordinate height offset based on depth scale
+    arPresenter.setAttribute('position', `0 ${0.8 * depth} 0`);
+  }
+});
+
+
+// --- 5. Interactive Q&A HUD Commands ---
+const qaGrid = document.getElementById('qaGrid');
+const qaButtons = qaGrid.querySelectorAll('.qa-hud-btn');
+
+qaButtons.forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    if (!isSystemBooted) return;
+    qaButtons.forEach(b => b.classList.remove('active'));
+    
+    const targetBtn = e.currentTarget;
+    targetBtn.classList.add('active');
+    
+    const key = targetBtn.getAttribute('data-question');
+    if (answers[key]) {
+      speakText(answers[key]);
+    }
+  });
+});
+
+
+// --- 6. Speech Audio Visualizer Canvas Renderer ---
+const resizeVisualizer = () => {
+  const rect = visualizerCanvas.getBoundingClientRect();
+  visualizerCanvas.width = rect.width;
+  visualizerCanvas.height = rect.height;
+};
+resizeVisualizer();
+window.addEventListener('resize', resizeVisualizer);
+
+const drawVisualizer = () => {
+  vCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+  
+  const isSpeaking = isTalking;
+  const barCount = 20;
+  const barWidth = visualizerCanvas.width / barCount;
+  
+  for (let i = 0; i < barCount; i++) {
+    let height = 2;
+    if (isSpeaking) {
+      height = Math.random() * (visualizerCanvas.height - 4) + 2;
+    }
+    
+    const x = i * barWidth;
+    const y = (visualizerCanvas.height - height) / 2;
+    
+    vCtx.fillStyle = 'var(--neon-red)';
+    vCtx.shadowBlur = 4;
+    vCtx.shadowColor = 'var(--neon-red)';
+    
+    vCtx.fillRect(x + 2, y, barWidth - 4, height);
+  }
+  
+  requestAnimationFrame(drawVisualizer);
+};
+drawVisualizer();
+
+
+// --- 7. Dynamic QR Code Input Link updates ---
+qrInput.addEventListener('input', (e) => {
+  const value = e.target.value.trim();
+  if (value) {
+    // Generate new QR Image URL dynamically using the QR API
+    const qrImg = document.querySelector('.qr-hud-box img');
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(value)}`;
+    }
+  }
+});
+
+
+// --- 8. Mini WhatsApp Direct Form ---
+waForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const baseNumber = "919044448686";
+  const messageText = waMsg.value.trim();
+  if (messageText) {
+    const encoded = encodeURIComponent(messageText);
+    const waUrl = `https://wa.me/${baseNumber}?text=${encoded}`;
+    window.open(waUrl, '_blank');
+  }
+});
+
+
+// --- 9. Dynamic VCard (.vcf) Download Generator ---
+vcardBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const vcardData = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "FN:Ritesh",
+    "TITLE:Master of AI",
+    "ORG:AI & Immersive AR Architect",
+    "TEL;TYPE=CELL,VOICE:+919044448686",
+    "NOTE:Bringing anything to life. Immersive AR systems and Autonomous AI agent mastermind.",
+    "URL;TYPE=WORK:https://ShivaRitesh.github.io/my-digital-bio/",
+    "END:VCARD"
+  ].join("\r\n");
+
+  const blob = new Blob([vcardData], { type: "text/vcard;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', 'Ritesh_Contact.vcf');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+});
+
+
+// --- 10. Web HUD Share Trigger ---
+shareBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  const shareData = {
+    title: 'Ritesh - Smart Digital Card',
+    text: 'Check out Ritesh\'s smart digital bio card (Master of AI)!',
+    url: window.location.href
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+      const originalText = shareBtn.querySelector('span').textContent;
+      shareBtn.querySelector('span').textContent = 'Link Copied!';
+      shareBtn.style.borderColor = 'var(--neon-green)';
+      shareBtn.style.color = 'var(--neon-green)';
+      
+      setTimeout(() => {
+        shareBtn.querySelector('span').textContent = originalText;
+        shareBtn.style.borderColor = '';
+        shareBtn.style.color = '';
+      }, 2000);
+    }
+  } catch (err) {
+    console.error('Error sharing page:', err);
+  }
+});
+
+
+// --- 11. Voice Synced Mute / Unmute Button ---
+if (voiceSyncBtn) {
+  voiceSyncBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isAudioEnabled = !isAudioEnabled;
+    
+    if (isAudioEnabled) {
+      voiceSyncBtn.classList.remove('speaking');
+      voiceSyncBtn.innerHTML = '<i data-lucide="volume-2"></i>';
+      speakText(answers.welcome);
+    } else {
+      voiceSyncBtn.classList.add('speaking');
+      voiceSyncBtn.innerHTML = '<i data-lucide="volume-x"></i>';
+      if (speechSynth) {
+        speechSynth.cancel();
+      }
+      stopVisualTalking();
+      if (subtitlesBox) {
+        subtitlesBox.textContent = "Voice transmission suspended. Subtitles active.";
+        subtitlesBox.classList.add('visible');
+      }
+    }
+    lucide.createIcons();
+  });
+}
