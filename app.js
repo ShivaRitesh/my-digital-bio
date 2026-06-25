@@ -138,19 +138,14 @@ const typeTerminal = () => {
   }
 };
 
-if (!isMobileViewport) {
-  // Desktop mode: Hide hacking terminal instantly
-  bootScreen.style.display = 'none';
-} else {
-  // Mobile mode: Await click trigger to run sequence with click audio
-  bootBtn.addEventListener('click', () => {
-    initAudio();
-    bootBtn.disabled = true;
-    bootBtn.textContent = "DECRYPTING...";
-    bootTerminal.innerHTML = "";
-    typeTerminal();
-  });
-}
+// Await click trigger to run sequence with click audio on all devices
+bootBtn.addEventListener('click', () => {
+  initAudio();
+  bootBtn.disabled = true;
+  bootBtn.textContent = "DECRYPTING...";
+  bootTerminal.innerHTML = "";
+  typeTerminal();
+});
 
 // --- 3. 3D Card Flip Mechanism ---
 cardInner.addEventListener('click', (e) => {
