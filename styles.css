@@ -536,6 +536,16 @@ body {
   background: transparent;
 }
 
+/* A-Frame canvas full-screen adjustments */
+.a-canvas {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 0 !important;
+}
+
 /* Override A-Frame canvas to be fullscreen inside overlay */
 .ar-overlay a-scene {
   position: absolute;
