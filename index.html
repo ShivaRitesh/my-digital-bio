@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-  <title>Ritesh - WebAR Live Presenter</title>
+  <title>Ritesh - WebAR Smart Bio Link</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
   <!-- A-Frame WebGL Framework -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <!-- AR.js tracking for A-Frame -->
@@ -12,7 +14,7 @@
 </head>
 <body style="margin: 0px; overflow: hidden;">
 
-  <!-- Fullscreen WebAR Camera & 3D Scene Layer -->
+  <!-- Fullscreen WebAR Camera & 3D Scene Layer (Runs in background of HUD) -->
   <a-scene embedded vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false;">
     
     <!-- Loaded Green-Screen Video Asset -->
@@ -43,7 +45,7 @@
   <div class="boot-screen" id="bootScreen">
     <div class="boot-logo">AR ENGINE</div>
     <div class="boot-terminal" id="bootTerminal">
-      SYS.BOOT: Loading Fullscreen WebGL Viewport...
+      SYS.BOOT: Loading Red-Obsidian HUD...
       SYS.BOOT: Loading WebAR A-Frame Component Matrix...
       SYS.BOOT: Loading Chroma Key Green-Screen Shaders...
       SYS.BOOT: Target-Marker Tracking Module Ready.
@@ -52,12 +54,217 @@
     <button class="boot-btn" id="bootBtn">INITIALIZE HOLOGRAPHIC AR LINK</button>
   </div>
 
-  <!-- Dynamic Captions Text Overlay -->
-  <div class="ar-subtitles" id="subtitlesBox">
-    AR Link active. Point camera at AR Target (Hiro pattern).
+  <!-- Fullscreen Interactive HUD Dashboard (Laid over A-Frame canvas) -->
+  <div class="hud-container">
+    
+    <!-- Top System Header HUD -->
+    <header class="hud-header">
+      <div class="hud-title-group">
+        <span class="hud-tag">AR LINK</span>
+        <h1 class="hud-title">Ritesh.Bio</h1>
+      </div>
+      <div class="hud-status-group">
+        <div class="hud-status-item">SYSTEM: <span>ENGAGED</span></div>
+        <div class="hud-status-item" id="camStatus">CAMERA: <span>STANDBY</span></div>
+      </div>
+    </header>
+
+    <!-- Main Grid Dashboard -->
+    <main class="hud-main-grid">
+      
+      <!-- Left Panel: User Profile Bio -->
+      <section class="hud-panel profile-panel">
+        <div>
+          <div class="avatar-container">
+            <div class="avatar-circle" id="avatarWrapper">
+              <div class="avatar-inner">R</div>
+              <div class="avatar-status"></div>
+            </div>
+          </div>
+          <h2 class="profile-name">Ritesh</h2>
+          <div class="profile-role">Master of AI</div>
+          <p class="profile-bio">
+            Bringing anything to life. Architect of immersive augmented reality experiences, autonomous AI agent workflows, and next-generation interactive systems.
+          </p>
+        </div>
+
+        <!-- Simulated Credit Card Tech Specs -->
+        <div class="profile-card-details">
+          <div class="details-row">
+            <span class="details-label">SYSTEM CORE</span>
+            <span class="details-value">MASTER.AI.v3</span>
+          </div>
+          <div class="details-row">
+            <span class="details-label">LINK SECURITY</span>
+            <span class="details-value">SECURE // SSL</span>
+          </div>
+          <div class="details-row">
+            <span class="details-label">SYS ACCESS</span>
+            <span class="details-value">VERIFIED</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Center Stage: Holographic 3D Projection Viewport -->
+      <section class="projection-viewport">
+        
+        <!-- Double-Sided Credit Card Perspective Box -->
+        <div class="card-perspective">
+          <div class="card-inner" id="cardInner">
+            
+            <!-- FRONT SIDE: Credit Card chip details -->
+            <div class="card-front">
+              <div class="card-top-row">
+                <div class="card-chip"></div>
+                <div class="card-logo-text">Identity</div>
+              </div>
+              <div class="card-number">4040 9044 4486 8600</div>
+              <div class="card-bottom-row">
+                <div class="card-holder">Ritesh</div>
+                <div class="card-valid">EXP <span>12/32</span></div>
+              </div>
+            </div>
+
+            <!-- BACK SIDE: Magnetic Stripe + Printable Hiro Marker + QR Code -->
+            <div class="card-back">
+              <div class="card-back-header">
+                <span>VIRTUAL SECURITY ACCESS</span>
+                <span>CVV 404</span>
+              </div>
+              <div class="card-back-mag"></div>
+              
+              <!-- Printable tracking target + QR code side-by-side (FIXED LINKS) -->
+              <div class="card-back-grid">
+                <div class="back-target-box">
+                  <span class="back-target-label">AR Target</span>
+                  <div class="mini-hiro-marker" title="Hiro Tracking Pattern">
+                    <img src="hiro_marker.png" alt="Hiro Marker">
+                  </div>
+                </div>
+                <div class="back-target-box">
+                  <span class="back-target-label">Scan Card</span>
+                  <div class="qr-hud-box">
+                    <img src="qr_code.png" alt="QR Code">
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-back-footer">
+                SCAN TO LAUNCH // POINT AT AR TARGET FOR 3D LOBBY
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Floating Card Action Controls -->
+        <div class="card-trigger-panel">
+          <button class="trigger-btn" id="flipCardBtn">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+            <span>FLIP IDENTITY CARD</span>
+          </button>
+        </div>
+
+        <!-- Dynamic Captions Text Overlay -->
+        <div class="hud-subtitles" id="subtitlesBox">
+          AR Link active. Choose a briefing card or tap card to flip it.
+        </div>
+
+        <!-- 3D Depth / Position Controller Slider -->
+        <div class="depth-controller-panel">
+          <span class="depth-label">HOLO DISTANCE</span>
+          <input type="range" id="depthSlider" class="depth-slider" min="0.5" max="2.2" step="0.05" value="1.2">
+        </div>
+      </section>
+
+      <!-- Right Panel: Interactive Q&A HUD Commands -->
+      <section class="hud-panel">
+        <div class="qa-title-row">
+          <i data-lucide="cpu" style="width: 16px; height: 16px; color: var(--neon-red);"></i>
+          <span>Briefing Modules</span>
+        </div>
+        <div class="qa-hud-list" id="qaGrid">
+          <button class="qa-hud-btn" data-question="intro">
+            <span>01 // Who is Ritesh?</span>
+            <i data-lucide="chevron-right"></i>
+          </button>
+          <button class="qa-hud-btn" data-question="capabilities">
+            <span>02 // Tech Capabilities</span>
+            <i data-lucide="chevron-right"></i>
+          </button>
+          <button class="qa-hud-btn" data-question="contact">
+            <span>03 // System Connection</span>
+            <i data-lucide="chevron-right"></i>
+          </button>
+        </div>
+        
+        <!-- Live Speech Audio Visualizer Canvas -->
+        <canvas class="visualizer-canvas" id="visualizerCanvas"></canvas>
+      </section>
+
+    </main>
+
+    <!-- Bottom HUD Widgets -->
+    <div class="hud-bottom-grid">
+      
+      <!-- Mini WhatsApp Input Panel -->
+      <section class="hud-panel wa-hud-panel">
+        <div class="wa-hud-header">
+          <i data-lucide="message-square" style="width: 16px; height: 16px; color: var(--neon-green);"></i>
+          <span>Direct Comm Link</span>
+        </div>
+        <form class="wa-hud-form" id="waForm">
+          <input type="text" id="waMsg" class="wa-hud-input" placeholder="Transmit direct text to Ritesh..." value="System check. Direct connection unlocked. Code: Master of AI.">
+          <button type="submit" class="wa-hud-send" title="Transmit WhatsApp Message">
+            <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+          </button>
+        </form>
+      </section>
+
+      <!-- Dynamic QR Code Portal HUD -->
+      <section class="hud-panel qr-hud-panel">
+        <div class="qr-hud-controls">
+          <div class="qr-hud-title">System Sharing Portal Link</div>
+          <div class="qr-hud-input-group">
+            <input type="text" id="qrInput" class="qr-hud-input" value="https://ShivaRitesh.github.io/my-digital-bio/">
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Actions Navigation Dock -->
+    <div class="hud-actions-bar">
+      <a href="https://instagram.com/" target="_blank" class="hud-action-btn btn-hud-insta" id="instaBtn">
+        <i data-lucide="instagram" style="width: 16px; height: 16px;"></i>
+        <span>Instagram</span>
+      </a>
+      <a href="https://wa.me/919044448686" target="_blank" class="hud-action-btn btn-hud-wa" id="waDirectBtn">
+        <i data-lucide="phone" style="width: 16px; height: 16px;"></i>
+        <span>WhatsApp</span>
+      </a>
+      <button class="hud-action-btn btn-hud-vcard" id="vcardBtn">
+        <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+        <span>Save VCARD</span>
+      </button>
+      <button class="hud-action-btn btn-hud-share" id="shareBtn">
+        <i data-lucide="share-2" style="width: 16px; height: 16px;"></i>
+        <span>Share Link</span>
+      </button>
+    </div>
+
+    <!-- System Footer -->
+    <footer class="hud-footer">
+      RITESH SMART DIGITAL HOLOGRAPHIC SYSTEM <span></span> CODES COMING LIVE
+    </footer>
+
   </div>
 
   <!-- Interactive WebAR HUD Core Script -->
   <script src="app.js"></script>
+  <script>
+    // Load Lucide Icon Glyphs
+    lucide.createIcons();
+  </script>
 </body>
 </html>
