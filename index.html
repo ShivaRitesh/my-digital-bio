@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ritesh - WebAR Smart Bio Link</title>
+  <meta name="description" content="Immersive WebAR Holographic Smart Card HUD for Ritesh, Master of AI.">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Fullscreen WebAR Camera Stream Layer -->
+  <video id="webcam" autoplay playsinline></video>
+
+  <!-- High-tech Fallback Cyber Grid -->
+  <div class="ar-fallback-bg">
+    <div class="grid-floor"></div>
+  </div>
+
+  <!-- Sci-fi Initialization Boot Screen -->
+  <div class="boot-screen" id="bootScreen">
+    <div class="boot-logo">AR ENGINE</div>
+    <div class="boot-terminal" id="bootTerminal">
+      SYS.BOOT: Loading Red-Obsidian HUD...
+      SYS.BOOT: Loading WebAR Projection Matrix...
+      SYS.BOOT: Accessing Device Gyroscope Sensors...
+      SYS.BOOT: Double-Sided Identity Module Ready.
+      SYS.BOOT: Awaiting Link Authorization...
+    </div>
+    <button class="boot-btn" id="bootBtn">INITIALIZE HOLOGRAPHIC AR LINK</button>
+  </div>
+
+  <!-- Fullscreen Interactive HUD Dashboard -->
+  <div class="hud-container">
+    
+    <!-- Top System Header HUD -->
+    <header class="hud-header">
+      <div class="hud-title-group">
+        <span class="hud-tag">AR LINK</span>
+        <h1 class="hud-title">Ritesh.Bio</h1>
+      </div>
+      <div class="hud-status-group">
+        <div class="hud-status-item">SYSTEM: <span>ENGAGED</span></div>
+        <div class="hud-status-item" id="camStatus">CAMERA: <span>STANDBY</span></div>
+      </div>
+    </header>
+
+    <!-- Main Grid Dashboard -->
+    <main class="hud-main-grid">
+      
+      <!-- Left Panel: User Profile Bio -->
+      <section class="hud-panel profile-panel">
+        <div>
+          <div class="avatar-container">
+            <div class="avatar-circle" id="avatarWrapper">
+              <div class="avatar-inner">R</div>
+              <div class="avatar-status"></div>
+            </div>
+          </div>
+          <h2 class="profile-name">Ritesh</h2>
+          <div class="profile-role">Master of AI</div>
+          <p class="profile-bio">
+            Bringing anything to life. Architect of immersive WebAR experiences, autonomous AI agent workflows, and next-generation interactive system integrations.
+          </p>
+        </div>
+
+        <!-- Simulated Credit Card Tech Specs -->
+        <div class="profile-card-details">
+          <div class="details-row">
+            <span class="details-label">SYSTEM CORE</span>
+            <span class="details-value">MASTER.AI.v3</span>
+          </div>
+          <div class="details-row">
+            <span class="details-label">LINK SECURITY</span>
+            <span class="details-value">SECURE // SSL</span>
+          </div>
+          <div class="details-row">
+            <span class="details-label">SYS ACCESS</span>
+            <span class="details-value">VERIFIED</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Center Stage: Holographic 3D Projection Viewport -->
+      <section class="projection-viewport">
+        
+        <!-- Double-Sided Credit Card Perspective Box -->
+        <div class="card-perspective">
+          <div class="card-inner" id="cardInner">
+            
+            <!-- FRONT SIDE: Hologram Stage + Chip details -->
+            <div class="card-front">
+              <!-- Metallic Microchip Graphic -->
+              <div class="card-chip"></div>
+              
+              <!-- Card Details -->
+              <div class="card-number">4040 9044 4486 8600</div>
+              <div class="card-holder">Ritesh</div>
+              <div class="card-valid">EXP <span>12/32</span></div>
+
+              <!-- Projector Window -->
+              <div class="card-hologram-stage" id="hologramStage">
+                <div class="card-projector-beam"></div>
+                <canvas class="particles-canvas" id="particlesCanvas"></canvas>
+                <div class="hologram-scanner-line"></div>
+                
+                <!-- Voice Volume Controller -->
+                <div class="audio-controller">
+                  <button class="audio-btn" id="voiceSyncBtn" title="Mute/Unmute Assistant Voice">
+                    <i data-lucide="volume-2"></i>
+                  </button>
+                </div>
+
+                <!-- Projection Content -->
+                <div class="assistant-avatar-wrapper">
+                  <img src="hologram_assistant.png" alt="Hologram Assistant" class="assistant-avatar-img" id="assistantImg">
+                  <div class="mouth-wave" id="mouthWave"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BACK SIDE: Magnetic Stripe + CVV + Dynamic QR Code -->
+            <div class="card-back">
+              <div class="card-back-header">
+                <span>VIRTUAL SECURITY ACCESS</span>
+                <span>CVV 404</span>
+              </div>
+              
+              <!-- Magnetic strip -->
+              <div class="card-back-mag"></div>
+              
+              <!-- Signature Strip -->
+              <div class="card-back-sig">AUTHORIZED BIO SYSTEM LINK</div>
+
+              <!-- Centered sharing QR portal -->
+              <div class="card-back-qr-container">
+                <div class="qr-hud-box" id="qrcode">
+                  <!-- Live QR generates here -->
+                </div>
+              </div>
+
+              <div class="card-back-footer">
+                SCAN FOR SECURE CONNECTION PROTOCOL
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Floating Card Action Controls -->
+        <div class="card-trigger-panel">
+          <button class="trigger-btn" id="flipCardBtn">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+            <span>FLIP IDENTITY CARD</span>
+          </button>
+        </div>
+
+        <!-- Dynamic Captions Text Overlay -->
+        <div class="hud-subtitles" id="subtitlesBox">
+          AR Link active. Choose a briefing card or tap card to flip it.
+        </div>
+
+        <!-- 3D Depth / Position Controller Slider -->
+        <div class="depth-controller-panel">
+          <span class="depth-label">HOLO DISTANCE</span>
+          <input type="range" id="depthSlider" class="depth-slider" min="0.5" max="1.8" step="0.05" value="1">
+        </div>
+      </section>
+
+      <!-- Right Panel: Interactive Q&A HUD Commands -->
+      <section class="hud-panel">
+        <div class="qa-title-row">
+          <i data-lucide="cpu" style="width: 16px; height: 16px; color: var(--neon-red);"></i>
+          <span>Briefing Modules</span>
+        </div>
+        <div class="qa-hud-list" id="qaGrid">
+          <button class="qa-hud-btn" data-question="intro">
+            <span>01 // Who is Ritesh?</span>
+            <i data-lucide="chevron-right"></i>
+          </button>
+          <button class="qa-hud-btn" data-question="capabilities">
+            <span>02 // Tech Capabilities</span>
+            <i data-lucide="chevron-right"></i>
+          </button>
+          <button class="qa-hud-btn" data-question="contact">
+            <span>03 // System Connection</span>
+            <i data-lucide="chevron-right"></i>
+          </button>
+        </div>
+        
+        <!-- Live Speech Audio Visualizer Canvas -->
+        <canvas class="visualizer-canvas" id="visualizerCanvas"></canvas>
+      </section>
+
+    </main>
+
+    <!-- Bottom HUD Widgets -->
+    <div class="hud-bottom-grid">
+      
+      <!-- Mini WhatsApp Input Panel -->
+      <section class="hud-panel wa-hud-panel">
+        <div class="wa-hud-header">
+          <i data-lucide="message-square" style="width: 16px; height: 16px; color: var(--neon-green);"></i>
+          <span>Direct Comm Link</span>
+        </div>
+        <form class="wa-hud-form" id="waForm">
+          <input type="text" id="waMsg" class="wa-hud-input" placeholder="Transmit direct text to Ritesh..." value="System check. Direct connection unlocked. Code: Master of AI.">
+          <button type="submit" class="wa-hud-send" title="Transmit WhatsApp Message">
+            <i data-lucide="send" style="width: 18px; height: 18px;"></i>
+          </button>
+        </form>
+      </section>
+
+      <!-- Dynamic QR Code Portal HUD (External configuration) -->
+      <section class="hud-panel qr-hud-panel">
+        <div class="qr-hud-controls">
+          <div class="qr-hud-title">System Sharing Portal Link</div>
+          <div class="qr-hud-input-group">
+            <input type="text" id="qrInput" class="qr-hud-input" value="https://instagram.com/ritesh">
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Actions Navigation Dock -->
+    <div class="hud-actions-bar">
+      <a href="https://instagram.com/" target="_blank" class="hud-action-btn btn-hud-insta" id="instaBtn">
+        <i data-lucide="instagram" style="width: 16px; height: 16px;"></i>
+        <span>Instagram</span>
+      </a>
+      <a href="https://wa.me/919044448686" target="_blank" class="hud-action-btn btn-hud-wa" id="waDirectBtn">
+        <i data-lucide="phone" style="width: 16px; height: 16px;"></i>
+        <span>WhatsApp</span>
+      </a>
+      <button class="hud-action-btn btn-hud-vcard" id="vcardBtn">
+        <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+        <span>Save VCARD</span>
+      </button>
+      <button class="hud-action-btn btn-hud-share" id="shareBtn">
+        <i data-lucide="share-2" style="width: 16px; height: 16px;"></i>
+        <span>Share Link</span>
+      </button>
+    </div>
+
+    <!-- System Footer -->
+    <footer class="hud-footer">
+      RITESH SMART DIGITAL HOLOGRAPHIC SYSTEM <span></span> CODES COMING LIVE
+    </footer>
+
+  </div>
+
+  <!-- Dynamic QR generator library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Interactive WebAR HUD Core Script -->
+  <script src="app.js"></script>
+  <script>
+    // Load Lucide Icon Glyphs
+    lucide.createIcons();
+  </script>
+</body>
+</html>
