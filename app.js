@@ -316,7 +316,7 @@ vcardBtn.addEventListener('click', (e) => {
     "ORG:AI & Immersive AR Architect",
     "TEL;TYPE=CELL,VOICE:+919044448686",
     "NOTE:Bringing anything to life. Immersive AR systems and Autonomous AI agent mastermind.",
-    "URL;TYPE=WORK:https://instagram.com/ritesh",
+    "URL;TYPE=WORK:https://ShivaRitesh.github.io/my-digital-bio/",
     "END:VCARD"
   ].join("\r\n");
 
