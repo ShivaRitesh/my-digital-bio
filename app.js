@@ -209,7 +209,7 @@ cardPortal.addEventListener('touchend', (e) => {
   }
 });
 
-// --- 5. Fullscreen WebAR Dynamic Injection ---
+// --- 5. Fullscreen WebAR Viewport Toggle ---
 launchArBtn.addEventListener('click', (e) => {
   e.stopPropagation(); // Avoid flipping the card
   
@@ -220,26 +220,6 @@ launchArBtn.addEventListener('click', (e) => {
   
   // Show full overlay
   arOverlay.style.display = 'block';
-  
-  // Inject A-Frame scene markup
-  const sceneHTML = `
-    <a-scene embedded vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false;">
-      <a-assets>
-        <video id="presenterVideo" loop crossorigin="anonymous" playsinline webkit-playsinline src="https://assets.mixkit.co/videos/preview/mixkit-woman-explaining-something-on-green-screen-39987-large.mp4"></video>
-      </a-assets>
-      <a-marker preset="hiro">
-        <a-video src="#presenterVideo" id="arPresenter" position="0 0.8 0" rotation="-90 0 0" width="1.25" height="1.65" material="shader: chromakey; color: 0.1 0.7 0.15; similarity: 0.38; smoothness: 0.08;"></a-video>
-        <a-ring color="#ff0033" radius-inner="0.6" radius-outer="0.65" rotation="-90 0 0" position="0 0.01 0"></a-ring>
-        <a-ring color="#ffaa00" radius-inner="0.45" radius-outer="0.48" rotation="-90 0 0" position="0 0.02 0" animation="property: rotation; to: -90 360 0; loop: true; dur: 6000; easing: linear;"></a-ring>
-      </a-marker>
-      <a-entity camera></a-entity>
-    </a-scene>
-  `;
-  
-  const sceneContainer = document.createElement('div');
-  sceneContainer.id = 'dynamicArScene';
-  sceneContainer.innerHTML = sceneHTML;
-  arOverlay.appendChild(sceneContainer);
   
   // Speak audio announcement explaining AR operation
   if (speechSynth) {
@@ -263,12 +243,10 @@ launchArBtn.addEventListener('click', (e) => {
   }
   
   // Play presenter video
-  setTimeout(() => {
-    const video = document.getElementById('presenterVideo');
-    if (video) {
-      video.play().catch(err => console.warn("Video playback blocked:", err));
-    }
-  }, 1000);
+  const video = document.getElementById('presenterVideo');
+  if (video) {
+    video.play().catch(err => console.warn("Video playback blocked:", err));
+  }
 });
 
 // Close AR mode
@@ -280,10 +258,10 @@ exitArBtn.addEventListener('click', (e) => {
     speechSynth.cancel();
   }
   
-  // Destroy A-Frame elements to stop camera feeds and conserve power
-  const dynamicArScene = document.getElementById('dynamicArScene');
-  if (dynamicArScene) {
-    dynamicArScene.remove();
+  // Pause presenter video
+  const video = document.getElementById('presenterVideo');
+  if (video) {
+    video.pause();
   }
   
   // Restore main card portal and background
