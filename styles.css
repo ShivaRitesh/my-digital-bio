@@ -2,9 +2,9 @@
 
 :root {
   --bg-color: #020205;
-  --hud-bg: rgba(12, 5, 5, 0.7);
-  --hud-border: rgba(255, 0, 51, 0.25);
-  --hud-border-glow: rgba(255, 0, 51, 0.1);
+  --hud-bg: rgba(12, 5, 5, 0.75);
+  --hud-border: rgba(255, 0, 51, 0.3);
+  --hud-border-glow: rgba(255, 0, 51, 0.12);
   
   /* Red & Black Theme Palette */
   --neon-red: #ff0033;
@@ -36,60 +36,21 @@ body {
   font-family: var(--font-body);
   min-height: 100vh;
   width: 100vw;
-  overflow-x: hidden;
+  overflow: hidden;
   position: relative;
 }
 
-/* Fullscreen Webcam & Fallback Backgrounds */
-#webcam {
-  position: fixed;
+/* A-Frame canvas full-screen adjustments */
+.a-canvas {
+  position: fixed !important;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  object-fit: cover;
-  z-index: -10;
-  pointer-events: none;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1; /* Sits beneath HUD overlay */
 }
 
-.ar-fallback-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: radial-gradient(circle at center, #140505 0%, #020205 100%);
-  z-index: -11;
-  overflow: hidden;
-}
-
-.ar-fallback-bg::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: 
-    linear-gradient(rgba(255, 0, 51, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 0, 51, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: center;
-}
-
-.grid-floor {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 50%;
-  background-image: linear-gradient(180deg, transparent, rgba(255, 0, 51, 0.1));
-  transform: perspective(300px) rotateX(80deg);
-  transform-origin: bottom;
-  z-index: -1;
-  opacity: 0.8;
-}
-
-/* System Boot Screen Overlay */
+/* Sci-fi System Boot Screen Overlay */
 .boot-screen {
   position: fixed;
   top: 0;
@@ -97,7 +58,7 @@ body {
   width: 100vw;
   height: 100vh;
   background: #050202;
-  z-index: 1000;
+  z-index: 2000;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -125,8 +86,8 @@ body {
   width: 100%;
   max-width: 400px;
   height: 180px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 0, 51, 0.2);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 0, 51, 0.25);
   border-radius: 8px;
   padding: 15px;
   font-family: var(--font-mono);
@@ -159,15 +120,24 @@ body {
   transform: scale(1.05);
 }
 
-/* Fullscreen HUD Layout */
+/* Fullscreen HUD Layout (Layered over A-Frame canvas) */
 .hud-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through to A-Frame canvas */
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  width: 100vw;
   padding: 20px;
-  position: relative;
-  z-index: 10;
+}
+
+/* Re-enable pointer events for HUD panels so they can be clicked */
+.hud-header, .hud-panel, .depth-controller-panel, .card-trigger-panel, .hud-actions-bar, .wa-hud-panel, .qr-hud-panel, .marker-panel {
+  pointer-events: auto;
 }
 
 /* Top System Header HUD */
@@ -270,9 +240,79 @@ body {
   bottom: 0; right: 0; border-width: 0 2px 2px 0; border-bottom-right-radius: 20px;
 }
 
-/* Left Panel: Credit Card Details info */
+/* Left Panel: Profile Bio & Tech Specs */
 .profile-panel {
   justify-content: space-between;
+}
+
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.avatar-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--neon-red), var(--neon-purple));
+  padding: 3px;
+  position: relative;
+  box-shadow: var(--glow-red);
+}
+
+.avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #04040d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--neon-red);
+  text-shadow: 0 0 10px rgba(255, 0, 51, 0.6);
+}
+
+.avatar-status {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--neon-green);
+  border: 3px solid #050510;
+  border-radius: 50%;
+  box-shadow: var(--glow-green);
+}
+
+.profile-name {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.profile-role {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--neon-green);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.profile-bio {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-align: center;
 }
 
 .profile-card-details {
@@ -299,21 +339,21 @@ body {
   font-weight: bold;
 }
 
-/* 3D Flipping Credit Card Area (Center Stage) */
+/* Center Stage Viewport (Card and AR Controls) */
 .projection-viewport {
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 420px;
+  min-height: 380px;
 }
 
-/* Credit Card Dimensions Perspective Wrapper */
+/* Double-Sided Credit Card perspective */
 .card-perspective {
   perspective: 1500px;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   aspect-ratio: 1.58 / 1;
   position: relative;
   z-index: 10;
@@ -346,32 +386,31 @@ body {
   overflow: hidden;
 }
 
-/* Front Card Style: Hologram Projector Stage */
+/* Front Card style: Holographic emitter chip */
 .card-front {
-  background: linear-gradient(135deg, #100404 0%, #030101 100%);
-  z-index: 2;
-  padding: 15px;
+  background: linear-gradient(135deg, #120404 0%, #030101 100%);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .card-front::before {
   content: '';
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  background-image: radial-gradient(circle at bottom, rgba(255, 0, 51, 0.1) 0%, transparent 60%);
+  background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255, 0, 51, 0.02) 3px, rgba(255, 0, 51, 0.02) 6px);
   pointer-events: none;
 }
 
-/* Credit Card Wireframe Chip Graphic */
 .card-chip {
-  position: absolute;
-  top: 25px;
-  left: 25px;
-  width: 42px;
-  height: 32px;
+  width: 44px;
+  height: 34px;
   background: rgba(255, 0, 51, 0.1);
   border: 1.5px solid var(--neon-red);
   border-radius: 6px;
   box-shadow: var(--glow-red);
+  position: relative;
 }
 
 .card-chip::after {
@@ -379,40 +418,51 @@ body {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 20px; height: 15px;
-  border: 1px solid rgba(255, 0, 51, 0.4);
+  width: 22px; height: 16px;
+  border: 1px solid rgba(255, 0, 51, 0.35);
 }
 
-/* Virtual Credit Card ID Numbers */
-.card-number {
-  position: absolute;
-  bottom: 50px;
-  left: 25px;
+.card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.card-logo-text {
   font-family: var(--font-title);
-  font-size: 15px;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: var(--neon-red);
+  text-shadow: var(--glow-red);
+  text-transform: uppercase;
+}
+
+.card-number {
+  font-family: var(--font-title);
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 3px;
   color: var(--text-primary);
   text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  margin-top: 15px;
+}
+
+.card-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
 }
 
 .card-holder {
-  position: absolute;
-  bottom: 25px;
-  left: 25px;
-  font-family: var(--font-mono);
-  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 2px;
   color: var(--text-secondary);
 }
 
 .card-valid {
-  position: absolute;
-  bottom: 25px;
-  right: 25px;
-  font-family: var(--font-mono);
-  font-size: 10px;
   color: var(--text-secondary);
 }
 
@@ -421,178 +471,95 @@ body {
   font-weight: bold;
 }
 
-/* Projection Viewport inside Card Face */
-.card-hologram-stage {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  width: 170px;
-  height: 80%;
-  background: radial-gradient(circle at bottom, rgba(255, 0, 51, 0.15) 0%, transparent 65%);
-  border: 1px solid rgba(255, 0, 51, 0.2);
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.card-projector-beam {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px;
-  height: 150px;
-  background: linear-gradient(0deg, rgba(255, 0, 51, 0.2) 0%, transparent 100%);
-  clip-path: polygon(15% 100%, 85% 100%, 100% 0%, 0% 0%);
-  pointer-events: none;
-}
-
-.is-talking .card-projector-beam {
-  animation: beamFlicker 0.2s infinite alternate;
-}
-
-/* Hologram Assistant Image Floating Stage */
-.assistant-avatar-wrapper {
-  height: 140px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 3;
-  width: 100%;
-}
-
-.assistant-avatar-img {
-  height: 100%;
-  max-width: 100%;
-  object-fit: contain;
-  mix-blend-mode: screen;
-  filter: drop-shadow(0 0 6px rgba(255, 0, 51, 0.8)) saturate(1.2) contrast(1.2);
-  animation: floatAvatar 3s ease-in-out infinite alternate, flickerHolo 6s ease-in-out infinite;
-}
-
-.is-talking .assistant-avatar-img {
-  filter: drop-shadow(0 0 12px rgba(255, 0, 51, 1)) saturate(1.5) contrast(1.3);
-  animation: talkVibrate 0.1s infinite alternate;
-}
-
-/* Mouth Wave lip-sync */
-.mouth-wave {
-  position: absolute;
-  top: 50%;
-  left: 51%;
-  transform: translate(-50%, -50%) scale(0);
-  width: 10px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--neon-red);
-  box-shadow: 0 0 6px var(--neon-red), 0 0 15px var(--neon-red);
-  z-index: 5;
-  pointer-events: none;
-  opacity: 0;
-  transition: all 0.1s ease;
-}
-
-.is-talking .mouth-wave {
-  opacity: 0.95;
-  animation: mouthPulse 0.15s infinite alternate;
-}
-
-@keyframes mouthPulse {
-  0% { transform: translate(-50%, -50%) scale(0.8) scaleY(0.5); }
-  100% { transform: translate(-50%, -50%) scale(1.8) scaleY(1.4); }
-}
-
-.particles-canvas {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.hologram-scanner-line {
-  position: absolute;
-  width: 100%;
-  height: 1.5px;
-  background: var(--neon-red);
-  box-shadow: 0 0 8px var(--neon-red);
-  z-index: 4;
-  animation: scanLine 4s linear infinite;
-  pointer-events: none;
-}
-
-/* Back Card Style: QR Code Center Hub */
+/* Back Card style: Marker + QR side-by-side */
 .card-back {
-  background: linear-gradient(135deg, #050202 0%, #180606 100%);
+  background: linear-gradient(135deg, #050202 0%, #150505 100%);
   transform: rotateY(180deg);
-  padding: 0px; /* mag stripe overrides padding */
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0;
 }
 
 .card-back-header {
-  padding: 15px 20px 0 20px;
+  padding: 12px 18px 0 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-title);
-  font-size: 10px;
+  font-size: 9px;
   color: var(--neon-red);
   letter-spacing: 2px;
 }
 
 .card-back-mag {
   width: 100%;
-  height: 38px;
+  height: 32px;
   background: #000000;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
-.card-back-sig {
-  margin: 10px 20px;
-  height: 24px;
-  background: repeating-linear-gradient(45deg, #b39999, #b39999 8px, #ccb3b3 8px, #ccb3b3 16px);
-  border-radius: 3px;
+/* Dual marker/QR placement on back side */
+.card-back-grid {
   display: flex;
+  justify-content: space-around;
   align-items: center;
-  justify-content: flex-end;
-  padding-right: 8px;
-  color: #000;
+  padding: 5px 15px;
+  flex-grow: 1;
+}
+
+.back-target-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.back-target-label {
   font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: bold;
-  letter-spacing: 1px;
+  font-size: 8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
-/* Centered QR code container on back */
-.card-back-qr-container {
+/* Mini embedded Hiro pattern image */
+.mini-hiro-marker {
+  width: 80px;
+  height: 80px;
+  background: white;
+  padding: 4px;
+  border-radius: 4px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  margin-bottom: 12px;
+  justify-content: center;
+}
+
+.mini-hiro-marker img {
+  width: 100%;
+  height: 100%;
 }
 
 .qr-hud-box {
   background: #ffffff;
-  padding: 6px;
-  border-radius: 8px;
-  box-shadow: 0 0 20px rgba(255, 0, 51, 0.25);
-  display: inline-block;
+  padding: 5px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
 }
 
 .qr-hud-box::after {
   content: '';
   position: absolute;
-  top: -4px; left: -4px; right: -4px; bottom: -4px;
+  top: -3px; left: -3px; right: -3px; bottom: -3px;
   border: 1.5px solid var(--neon-red);
-  border-radius: 12px;
+  border-radius: 9px;
   pointer-events: none;
 }
 
 .card-back-footer {
-  padding: 0 20px 12px 20px;
+  padding: 0 15px 10px 15px;
   text-align: center;
   font-family: var(--font-mono);
   font-size: 8px;
@@ -600,11 +567,11 @@ body {
   letter-spacing: 1px;
 }
 
-/* Floating Card Action Triggers */
+/* Card Control Triggers */
 .card-trigger-panel {
   display: flex;
-  gap: 15px;
-  margin-bottom: 25px;
+  gap: 12px;
+  margin-bottom: 20px;
   z-index: 10;
 }
 
@@ -630,11 +597,11 @@ body {
   box-shadow: var(--glow-red);
 }
 
-/* Subtitle captions box */
+/* Subtitle HUD captions */
 .hud-subtitles {
   width: 100%;
   max-width: 420px;
-  background: rgba(12, 5, 5, 0.95);
+  background: rgba(12, 5, 5, 0.9);
   border: 1px solid var(--neon-red);
   border-radius: 12px;
   padding: 10px 15px;
@@ -651,6 +618,7 @@ body {
   opacity: 0;
   transform: translateY(10px);
   transition: all 0.3s ease;
+  margin-bottom: 15px;
 }
 
 .hud-subtitles.visible {
@@ -658,10 +626,10 @@ body {
   transform: translateY(0);
 }
 
-/* Depth controller HUD slider */
+/* Depth range slider */
 .depth-controller-panel {
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
   background: var(--hud-bg);
   border: 1px solid var(--hud-border);
   border-radius: 14px;
@@ -705,7 +673,7 @@ body {
   transform: scale(1.2);
 }
 
-/* Q&A panel styles (Right Panel) */
+/* Right Panel: Interactive Q&A HUD Commands */
 .qa-title-row {
   display: flex;
   align-items: center;
@@ -744,7 +712,7 @@ body {
 .qa-hud-btn:hover {
   background: rgba(255, 0, 51, 0.08);
   border-color: var(--neon-red);
-  box-shadow: 0 0 10px rgba(255, 0, 51, 0.2);
+  box-shadow: 0 0 10px rgba(255, 0, 51, 0.25);
   transform: translateX(5px);
 }
 
@@ -769,6 +737,89 @@ body {
   height: 30px;
   margin-top: 15px;
   border-radius: 4px;
+}
+
+/* Printable test marker modal */
+.marker-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  width: 90%;
+  max-width: 320px;
+  background: rgba(10, 3, 3, 0.96);
+  border: 2px solid var(--neon-red);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--glow-red);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.marker-panel.visible {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.marker-panel-title {
+  font-family: var(--font-title);
+  font-size: 14px;
+  color: var(--neon-red);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.marker-panel-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.marker-image {
+  width: 180px;
+  height: 180px;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-image img {
+  width: 100%;
+  height: 100%;
+}
+
+.marker-close-btn {
+  background: transparent;
+  border: 1px solid var(--neon-red);
+  color: var(--neon-red);
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: var(--font-title);
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.marker-close-btn:hover {
+  background: var(--neon-red);
+  color: #020205;
+  box-shadow: var(--glow-red);
 }
 
 /* Bottom HUD widgets */
@@ -936,7 +987,7 @@ body {
 
 .btn-hud-vcard:hover {
   background: var(--neon-red);
-  color: #020207;
+  color: #020205;
   box-shadow: var(--glow-red);
   transform: translateY(-2px);
 }
@@ -949,7 +1000,7 @@ body {
 
 .btn-hud-share:hover {
   background: var(--neon-red);
-  color: #020207;
+  color: #020205;
   box-shadow: var(--glow-red);
   transform: translateY(-2px);
 }
@@ -987,9 +1038,14 @@ body {
   100% { transform: translateY(-4px) scale(1.02); }
 }
 
-@keyframes beamFlicker {
-  0% { opacity: 0.7; }
-  100% { opacity: 0.9; }
+@keyframes flickerHolo {
+  0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 0.95; }
+  20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.3; }
+}
+
+@keyframes talkVibrate {
+  0% { transform: translateY(-4px) scale(1.02) rotate(-0.5deg); }
+  100% { transform: translateY(-4px) scale(1.02) rotate(0.5deg); }
 }
 
 @media (max-width: 767px) {
