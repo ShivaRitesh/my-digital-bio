@@ -47,41 +47,49 @@ let audioCtx = null;
 
 // --- 1. Dynamic Mechanical Keyboard Sound Synthesis ---
 const initAudio = () => {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  } catch (err) {
+    console.warn("AudioContext failed to initialize:", err);
   }
 };
 
 const playKeyboardClick = (isSpaceOrEnd = false) => {
-  if (!audioCtx) return;
-  
-  // Make sure AudioContext is running
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+  try {
+    if (!audioCtx) return;
+    
+    // Make sure AudioContext is running
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = 'triangle';
+    
+    if (isSpaceOrEnd) {
+      // Lower pitched sound for spaces/ends
+      osc.frequency.setValueAtTime(550 + Math.random() * 150, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.03);
+    } else {
+      // High-pitched mechanical clicking sound
+      osc.frequency.setValueAtTime(1400 + Math.random() * 450, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.015);
+    }
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + (isSpaceOrEnd ? 0.035 : 0.018));
+  } catch (err) {
+    console.warn("Keyboard click audio failed to play:", err);
   }
-  
-  const osc = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-  
-  osc.type = 'triangle';
-  
-  if (isSpaceOrEnd) {
-    // Lower pitched sound for spaces/ends
-    osc.frequency.setValueAtTime(550 + Math.random() * 150, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.03);
-  } else {
-    // High-pitched mechanical clicking sound
-    osc.frequency.setValueAtTime(1400 + Math.random() * 450, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.015);
-  }
-  
-  osc.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  
-  osc.start();
-  osc.stop(audioCtx.currentTime + (isSpaceOrEnd ? 0.035 : 0.018));
 };
 
 // --- 2. Mobile-Only Hacking Boot Sequence ---
