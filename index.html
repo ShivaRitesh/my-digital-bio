@@ -2,19 +2,42 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ritesh - WebAR Smart Bio Link</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>Ritesh - WebAR Live Presenter Card</title>
   <meta name="description" content="Immersive WebAR Holographic Smart Card HUD for Ritesh, Master of AI.">
   <link rel="stylesheet" href="styles.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- A-Frame WebGL Framework -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <!-- AR.js tracking for A-Frame -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
-<body>
+<body style="margin: 0px; overflow: hidden;">
 
-  <!-- Fullscreen WebAR Camera Stream Layer -->
-  <video id="webcam" autoplay playsinline></video>
+  <!-- Fullscreen WebAR Camera & 3D Scene Layer -->
+  <a-scene embedded vr-mode-ui="enabled: false" arjs="sourceType: webcam; debugUIEnabled: false;">
+    
+    <!-- Loaded Green-Screen Video Asset (Blonde Female Explaining/Talking) -->
+    <a-assets>
+      <video id="presenterVideo" loop crossorigin="anonymous" playsinline webkit-playsinline src="https://assets.mixkit.co/videos/preview/mixkit-woman-explaining-something-on-green-screen-39987-large.mp4"></video>
+    </a-assets>
 
-  <!-- High-tech Fallback Cyber Grid -->
+    <!-- Hiro Tracking Marker Node -->
+    <a-marker preset="hiro">
+      <!-- 3D video plane running custom chromakey material shader -->
+      <a-video src="#presenterVideo" id="arPresenter" position="0 0.8 0" rotation="-90 0 0" width="1.2" height="1.6" material="shader: chromakey; color: 0.1 0.7 0.15; similarity: 0.38; smoothness: 0.08;"></a-video>
+      
+      <!-- Glowing Red Holographic Emitter Rings under her feet -->
+      <a-ring color="#ff0033" radius-inner="0.6" radius-outer="0.65" rotation="-90 0 0" position="0 0.01 0"></a-ring>
+      <a-ring color="#ffaa00" radius-inner="0.45" radius-outer="0.48" rotation="-90 0 0" position="0 0.02 0" animation="property: rotation; to: -90 360 0; loop: true; dur: 6000; easing: linear;"></a-ring>
+    </a-marker>
+
+    <!-- AR Scene Camera -->
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <!-- High-tech Fallback Cyber Grid (only active if camera fails to initialize) -->
   <div class="ar-fallback-bg">
     <div class="grid-floor"></div>
   </div>
@@ -24,15 +47,16 @@
     <div class="boot-logo">AR ENGINE</div>
     <div class="boot-terminal" id="bootTerminal">
       SYS.BOOT: Loading Red-Obsidian HUD...
-      SYS.BOOT: Loading WebAR Projection Matrix...
+      SYS.BOOT: Loading WebAR A-Frame Component Matrix...
+      SYS.BOOT: Loading Chroma Key Green-Screen Shaders...
       SYS.BOOT: Accessing Device Gyroscope Sensors...
-      SYS.BOOT: Double-Sided Identity Module Ready.
+      SYS.BOOT: Target-Marker Tracking Module Ready.
       SYS.BOOT: Awaiting Link Authorization...
     </div>
     <button class="boot-btn" id="bootBtn">INITIALIZE HOLOGRAPHIC AR LINK</button>
   </div>
 
-  <!-- Fullscreen Interactive HUD Dashboard -->
+  <!-- Fullscreen Interactive HUD Dashboard (Laid over A-Frame canvas) -->
   <div class="hud-container">
     
     <!-- Top System Header HUD -->
@@ -90,59 +114,45 @@
         <div class="card-perspective">
           <div class="card-inner" id="cardInner">
             
-            <!-- FRONT SIDE: Hologram Stage + Chip details -->
+            <!-- FRONT SIDE: Credit Card chip details -->
             <div class="card-front">
-              <!-- Metallic Microchip Graphic -->
-              <div class="card-chip"></div>
-              
-              <!-- Card Details -->
+              <div class="card-top-row">
+                <div class="card-chip"></div>
+                <div class="card-logo-text">Identity</div>
+              </div>
               <div class="card-number">4040 9044 4486 8600</div>
-              <div class="card-holder">Ritesh</div>
-              <div class="card-valid">EXP <span>12/32</span></div>
-
-              <!-- Projector Window -->
-              <div class="card-hologram-stage" id="hologramStage">
-                <div class="card-projector-beam"></div>
-                <canvas class="particles-canvas" id="particlesCanvas"></canvas>
-                <div class="hologram-scanner-line"></div>
-                
-                <!-- Voice Volume Controller -->
-                <div class="audio-controller">
-                  <button class="audio-btn" id="voiceSyncBtn" title="Mute/Unmute Assistant Voice">
-                    <i data-lucide="volume-2"></i>
-                  </button>
-                </div>
-
-                <!-- Projection Content -->
-                <div class="assistant-avatar-wrapper">
-                  <img src="hologram_assistant.png" alt="Hologram Assistant" class="assistant-avatar-img" id="assistantImg">
-                  <div class="mouth-wave" id="mouthWave"></div>
-                </div>
+              <div class="card-bottom-row">
+                <div class="card-holder">Ritesh</div>
+                <div class="card-valid">EXP <span>12/32</span></div>
               </div>
             </div>
 
-            <!-- BACK SIDE: Magnetic Stripe + CVV + Dynamic QR Code -->
+            <!-- BACK SIDE: Magnetic Stripe + Printable Hiro Marker + QR Code -->
             <div class="card-back">
               <div class="card-back-header">
                 <span>VIRTUAL SECURITY ACCESS</span>
                 <span>CVV 404</span>
               </div>
-              
-              <!-- Magnetic strip -->
               <div class="card-back-mag"></div>
               
-              <!-- Signature Strip -->
-              <div class="card-back-sig">AUTHORIZED BIO SYSTEM LINK</div>
-
-              <!-- Centered sharing QR portal -->
-              <div class="card-back-qr-container">
-                <div class="qr-hud-box" id="qrcode">
-                  <!-- Live QR generates here -->
+              <!-- Printable tracking target + QR code side-by-side -->
+              <div class="card-back-grid">
+                <div class="back-target-box">
+                  <span class="back-target-label">AR Target</span>
+                  <div class="mini-hiro-marker" title="Hiro Tracking Pattern">
+                    <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.png" alt="Hiro Marker">
+                  </div>
+                </div>
+                <div class="back-target-box">
+                  <span class="back-target-label">Scan Card</span>
+                  <div class="qr-hud-box" id="qrcode">
+                    <!-- Live QR generates here -->
+                  </div>
                 </div>
               </div>
 
               <div class="card-back-footer">
-                SCAN FOR SECURE CONNECTION PROTOCOL
+                SCAN TO LAUNCH // POINT AT AR TARGET FOR 3D LOBBY
               </div>
             </div>
 
@@ -155,6 +165,10 @@
             <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
             <span>FLIP IDENTITY CARD</span>
           </button>
+          <button class="trigger-btn" id="showMarkerBtn">
+            <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+            <span>SHOW TEST TARGET</span>
+          </button>
         </div>
 
         <!-- Dynamic Captions Text Overlay -->
@@ -165,7 +179,7 @@
         <!-- 3D Depth / Position Controller Slider -->
         <div class="depth-controller-panel">
           <span class="depth-label">HOLO DISTANCE</span>
-          <input type="range" id="depthSlider" class="depth-slider" min="0.5" max="1.8" step="0.05" value="1">
+          <input type="range" id="depthSlider" class="depth-slider" min="0.5" max="2.2" step="0.05" value="1.2">
         </div>
       </section>
 
@@ -213,7 +227,7 @@
         </form>
       </section>
 
-      <!-- Dynamic QR Code Portal HUD (External configuration) -->
+      <!-- Dynamic QR Code Portal HUD -->
       <section class="hud-panel qr-hud-panel">
         <div class="qr-hud-controls">
           <div class="qr-hud-title">System Sharing Portal Link</div>
@@ -250,6 +264,16 @@
       RITESH SMART DIGITAL HOLOGRAPHIC SYSTEM <span></span> CODES COMING LIVE
     </footer>
 
+  </div>
+
+  <!-- Printable/Test Target Pop-up Box -->
+  <div class="marker-panel" id="markerPanel">
+    <div class="marker-panel-title">AR Test Target</div>
+    <div class="marker-panel-desc">Point your phone camera at this Hiro pattern to project the live blonde presenter hologram standing on it!</div>
+    <div class="marker-image">
+      <img src="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/HIRO.png" alt="Hiro Marker">
+    </div>
+    <button class="marker-close-btn" id="closeMarkerBtn">CLOSE TARGET</button>
   </div>
 
   <!-- Dynamic QR generator library -->
